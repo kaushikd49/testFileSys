@@ -1,0 +1,206 @@
+# Starting the app
+~/IdeaProjects/Playground
+> java  -cp src:commons-cli-1.6.0.jar:commons-io-2.4.jar:lombok-1.18.20.jar filesys.MyFileSystem
+usage: myFileSystem
+ -cat <arg>        Display contents of a file
+ -cd <arg>         Change current working directory
+ -find <arg>       Find a file/directory within current working directory
+                   tree
+ -ln <arg>         Sym/hard linking a file. <src> <dest>. Use ln -s for
+                   soft link and ln -h for hard link
+ -ls <arg>         Display entries of a directory, by default current
+                   directory
+ -mkdir <arg>      Create new directory
+ -mv <arg>         Move file/directory from one place to another
+ -pwd              Display present working directory
+ -quit             Quit the shell
+ -rm <arg>         Remove a file. For directory recursively, use -r in
+                   addition
+ -touch <arg>      Create new file
+ -walktree <arg>   Walk a tree and find the first appearing pattern
+ -write <arg>      Write contents to a file
+
+# Create files and b
+kshell> -touch a
+kshell> -touch b
+
+# Listing file works, and also indicates file types r: is regular, d: directory, s: soft link and h: hard link
+kshell> -ls
+r: a /a
+r: b /b
+
+# Make dir works
+kshell> -mkdir c
+kshell> -ls
+r: a /a
+r: b /b
+d: c /c
+
+# Cat an empty file shows null output
+kshell> -cat a
+null
+# Cat a non existing file errors
+kshell> -cat d
+Child d is not found in directory /
+
+# Writing to a file works
+kshell> -write a "here I am .. this is me..there's something...\"-Bryan Adams\""
+# View contents of written file
+kshell> -cat a
+here I am .. this is me..there's something...\"-Bryan Adams\"
+
+# Relative path file creation
+kshell> -touch c/d
+# Soft link creation works
+kshell> -ln -s c/d e
+# Cat the source file
+kshell> -cat e
+null
+# Cannot write to a directory since it is not a regular file
+kshell> -write d "hello world...."
+Child d is not found in directory /
+
+# Write to file with relative path
+kshell> -write c/d "hello world..."
+# View contents with relative path
+kshell> -cat c/d
+hello world...
+# Cat e also gives same result since e is a soft link to c/d
+kshell> -cat e
+hello world...
+# Remove the source file
+kshell> -rm c/d
+# Cannot view after removing
+kshell> -cat d
+Child d is not found in directory /
+# Cannot cat e as well now since the source file is deleted
+kshell> -cat e
+Child d is not found in directory /c
+
+kshell> -ls
+r: a /a
+r: b /b
+d: c /c
+s: e /e
+
+kshell> -write a "good morning.."
+kshell> -cat a
+good morning..
+# Now create a hard link
+kshell> -ln -h a c/hlink
+# Hard link source file view
+kshell> -cat a
+good morning..
+# View the hard link contents - matches the source file
+kshell> -cat c/hlink
+good morning..
+# Remove the hard link source file
+kshell> -rm a
+# Can still view the hard link even after source file removal
+kshell> -cat c/hlink
+good morning..
+
+kshell> -ls
+r: b /b
+d: c /c
+s: e /e
+
+# Listing shows hard link
+kshell> -ls c
+h: hlink /c/hlink
+
+# Present dir
+kshell> -pwd
+d:  /
+
+# Change current dir and list it
+kshell> -cd c
+kshell> -ls
+h: hlink /c/hlink
+kshell> -cd /
+kshell> -ls
+r: b /b
+d: c /c
+s: e /e
+
+# Find all files named hlink
+kshell> -find hlink
+h: hlink /c/hlink
+
+# Make a deeply nested dir and create a file b 
+kshell> -mkdir c/q/w/r/t/y
+kshell> -touch c/q/w/r/t/y/b
+
+
+# Lets use walktree to find the first occurance of b (just below root level is the 1st occurance)
+kshell> -walktree . b
+found first occurrence of b at /b
+kshell> -ls
+r: b /b
+d: c /c
+s: e /e
+
+kshell> -ls c
+d: q /c/q
+h: hlink /c/hlink
+
+kshell> -ls c/q/w/r
+d: t /c/q/w/r/t
+
+# Relative path works with parent accesses as well
+kshell> -ls c/q/w/../..
+d: q /c/q
+h: hlink /c/hlink
+
+# Lets move files
+kshell> -mv c/q/w/r/t/y/b z
+
+# Move has worked - present in new loc and not in old
+kshell> -ls
+r: b /b
+d: c /c
+s: e /e
+r: z /z
+
+kshell> -ls c/q/w/r/t/y/
+
+kshell> -mv b f
+kshell> -ls
+d: c /c
+s: e /e
+r: f /f
+r: z /z
+kshell> -mkdir dd
+kshell> -ls
+d: dd /dd
+d: c /c
+s: e /e
+r: f /f
+r: z /z
+kshell> -mkdir foo
+# Rename dirs is possible
+kshell> -mv c foo
+kshell> -ls
+s: e /e
+r: f /f
+d: foo /foo
+r: z /z
+kshell> -ls foo
+kshell> -mkdir bar
+kshell> -ls
+d: bar /bar
+s: e /e
+r: f /f
+d: foo /foo
+r: z /z
+
+# One dir can be moved under other if ends with /
+kshell> -mv foo bar/
+kshell> -ls
+d: bar /bar
+s: e /e
+r: f /f
+r: z /z
+kshell> -ls bar
+d: foo /bar/foo
+
